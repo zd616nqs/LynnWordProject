@@ -1,0 +1,7 @@
+{
+  "name": "Healing Vocab - Personal Word Diary",
+  "description": "A minimalist, healing-themed vocabulary app that helps you master the words you encounter in your daily life and work through spaced repetition and AI-powered feedback.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
