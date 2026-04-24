@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { enrichWordData } from '../geminiService';
+import { enrichWordData } from '../geminiClient';
 import { Loader2, X, ChevronRight, Edit3 } from 'lucide-react';
 
 interface Props {

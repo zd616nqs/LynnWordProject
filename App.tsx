@@ -7,6 +7,8 @@ import WordList from './components/WordList';
 import StudySession from './components/StudySession';
 import Calendar from './components/Calendar';
 import { Home, Plus, Book, CheckCircle2 } from 'lucide-react';
+import { getLocalDateKey } from './utils/date';
+import { buildStudyQueue, getNextLevel } from './utils/study';
 
 const STORAGE_KEY = 'buddy_vocab_data_v2'; // Versioned key for new SRS logic
 const ACTIVITY_KEY = 'buddy_vocab_activity_v2';
@@ -16,6 +18,7 @@ const App: React.FC = () => {
   const [activityLog, setActivityLog] = useState<ActivityLog>({});
   const [view, setView] = useState<AppView>('dashboard');
   const [showCalendar, setShowCalendar] = useState(false);
+  const [studyQueue, setStudyQueue] = useState<Word[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Ebbinghaus Forgetting Curve Intervals (in hours)
@@ -41,10 +44,8 @@ const App: React.FC = () => {
     }
   }, [words, activityLog, loading]);
 
-  const getTodayStr = () => new Date().toISOString().split('T')[0];
-
   const markActivity = (type: 'added' | 'reviewed') => {
-    const today = getTodayStr();
+    const today = getLocalDateKey();
     setActivityLog(prev => ({
       ...prev,
       [today]: {
@@ -91,12 +92,7 @@ const App: React.FC = () => {
     setWords(prev => prev.map(w => {
       if (w.id === id) {
         let newLevel: number;
-        if (correct) {
-          newLevel = Math.min(7, w.level + 1);
-        } else {
-          // Significant drop on error to ensure re-learning
-          newLevel = Math.max(0, w.level - 2);
-        }
+        newLevel = getNextLevel(w.level, correct);
         
         const nextReview = Date.now() + (SRS_INTERVALS_HOURS[newLevel] * 60 * 60 * 1000);
         return {
@@ -112,7 +108,15 @@ const App: React.FC = () => {
 
   const handleStudyFinish = () => {
     markActivity('reviewed');
+    setStudyQueue([]);
     setView('dashboard');
+  };
+
+  const handleStartStudy = () => {
+    // Snapshot due words at session start so SRS updates don't reshuffle the active session.
+    const dueWords = buildStudyQueue(words);
+    setStudyQueue(dueWords);
+    setView('study');
   };
 
   if (loading) return (
@@ -127,7 +131,7 @@ const App: React.FC = () => {
         {view === 'dashboard' && (
           <Dashboard 
             words={words} 
-            onStartStudy={() => setView('study')} 
+            onStartStudy={handleStartStudy}
             onAddWord={() => setView('add')} 
             onOpenCalendar={() => setShowCalendar(true)}
           />
@@ -151,7 +155,7 @@ const App: React.FC = () => {
         )}
         {view === 'study' && (
           <StudySession 
-            words={words.filter(w => !w.isMastered && w.nextReviewDate <= Date.now())} 
+            words={studyQueue}
             onFinish={handleStudyFinish}
             onResult={updateWordLevel}
           />

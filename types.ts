@@ -7,7 +7,7 @@ export interface Word {
   definitionCn: string;
   sentences: string[];
   sentenceTranslations: string[];
-  level: number; // 0-5 (Mastery level)
+  level: number; // 0-7 (Mastery level)
   nextReviewDate: number; // Timestamp
   encounterCount: number;
   lastEncountered: number;

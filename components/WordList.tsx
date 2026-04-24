@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Word } from '../types';
 import { ChevronLeft, Volume2, Search, Sparkles, BookOpen, Quote, Eye, EyeOff } from 'lucide-react';
-import { playTTS } from '../geminiService';
+import { playTTS } from '../geminiClient';
 
 interface Props {
   words: Word[];

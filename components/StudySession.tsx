@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Word } from '../types';
-import { generateQuizDistractors, evaluatePronunciation, playTTS } from '../geminiService';
+import { generateQuizDistractors, evaluatePronunciation, playTTS } from '../geminiClient';
 import { Volume2, Mic, Check, X, ArrowRight, Loader2, Zap, Sparkles, Brain } from 'lucide-react';
 
 interface Props {
@@ -29,15 +29,29 @@ const StudySession: React.FC<Props> = ({ words, onFinish, onResult }) => {
 
   const currentWord = words[currentIndex];
 
+  const buildFallbackOptions = (correctDefinition: string): string[] => [
+    '与该词无关的释义',
+    '另一个常见但错误的释义',
+    '上下文不匹配的释义',
+    correctDefinition,
+  ].sort(() => Math.random() - 0.5);
+
   useEffect(() => {
     if (currentWord && step === 'meaning') loadOptions();
   }, [currentWord, step]);
 
   const loadOptions = async () => {
+    if (!currentWord) return;
     setLoading(true);
-    const distractors = await generateQuizDistractors(currentWord.term, currentWord.definitionCn);
-    setOptions([...distractors, currentWord.definitionCn].sort(() => Math.random() - 0.5));
-    setLoading(false);
+    try {
+      const distractors = await generateQuizDistractors(currentWord.term, currentWord.definitionCn);
+      setOptions([...distractors, currentWord.definitionCn].sort(() => Math.random() - 0.5));
+    } catch (error) {
+      console.error('Failed to load distractor options', error);
+      setOptions(buildFallbackOptions(currentWord.definitionCn));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const playClick = () => {
@@ -157,7 +171,7 @@ const StudySession: React.FC<Props> = ({ words, onFinish, onResult }) => {
             <h1 className="text-5xl font-black text-black tracking-tighter">{currentWord.term}</h1>
             <div className="grid grid-cols-1 gap-3 w-full">
               {loading ? (
-                <div className="py-10"><Loader2 className="animate-spin mx-auto text-black/10" size={40} /></div>
+                <div className="py-10" data-testid="loading-spinner"><Loader2 className="animate-spin mx-auto text-black/10" size={40} /></div>
               ) : (
                 options.map((opt, i) => (
                   <button

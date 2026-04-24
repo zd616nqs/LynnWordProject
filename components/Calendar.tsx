@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { ActivityLog } from '../types';
-import { X, ChevronLeft, ChevronRight, Flame, Plus, Check } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Flame } from 'lucide-react';
+import { calculateActivityStreak } from '../utils/date';
 
 interface Props {
   activityLog: ActivityLog;
@@ -51,23 +52,6 @@ const Calendar: React.FC<Props> = ({ activityLog, onClose }) => {
     return days;
   };
 
-  const calculateStreak = () => {
-    let streak = 0;
-    let checkDate = new Date();
-    
-    while (true) {
-      const dateStr = checkDate.toISOString().split('T')[0];
-      const activity = activityLog[dateStr];
-      if (activity?.added || activity?.reviewed) {
-        streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-    return streak;
-  };
-
   const monthName = currentMonth.toLocaleString('default', { month: 'long' });
 
   return (
@@ -97,8 +81,8 @@ const Calendar: React.FC<Props> = ({ activityLog, onClose }) => {
         </div>
 
         <div className="grid grid-cols-7 mb-4 text-center">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-            <span key={day} className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{day}</span>
+          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+            <span key={`${day}-${index}`} className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{day}</span>
           ))}
         </div>
 
@@ -111,7 +95,7 @@ const Calendar: React.FC<Props> = ({ activityLog, onClose }) => {
         <div className="bg-[#FFEB99] p-6 rounded-[2rem] flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-[10px] font-black uppercase text-black/40 mb-1">Current Streak</span>
-            <span className="text-2xl font-black">{calculateStreak()} Days</span>
+            <span className="text-2xl font-black">{calculateActivityStreak(activityLog)} Days</span>
           </div>
           <Flame size={24} className="text-orange-400 fill-current" />
         </div>
